@@ -23,7 +23,7 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* 2. الروابط السريعة */}
+        
         <div className='flex flex-col items-center sm:items-start gap-3.5'>
           <h1 className='text-white font-bold text-lg border-b border-gray-800 pb-1 w-fit'>الروابط السريعة</h1>
           <div className='flex flex-col items-center sm:items-start gap-2.5 text-sm'>
