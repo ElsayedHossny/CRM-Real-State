@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" dir="ltr"> 
-      <body className={`${cairo.variable} ${inter.variable} font-cairo antialiased`}>
+    <html lang="ar" dir="rtl"> 
+      <body className={`${cairo.variable} ${inter.variable} font-cairo antialiased`} suppressHydrationWarning>
         {children} 
       </body>
     </html>
