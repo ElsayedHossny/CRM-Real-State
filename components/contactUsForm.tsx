@@ -7,7 +7,7 @@ import * as z from "zod"
 import { MdMarkEmailRead, MdPlace } from "react-icons/md";
 import { FaPhoneVolume } from "react-icons/fa6";
 import { Button } from './ui/button'
-import { motion  } from "motion/react"; 
+import { motion ,Variants } from "motion/react"; 
 import {
   Form,
   FormControl,
@@ -42,15 +42,14 @@ export default function ContactUsForm() {
   }
 
  
-  const cardVariants = {
-    hidden: { opacity: 0, x: 40 },
-    visible: (index: number) => ({
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.5, delay: index * 0.15, ease: "easeOut"as const  }
-    })
-  };
-
+const cardVariants: Variants = {
+  hidden: { opacity: 0, x: 40 },
+  visible: (index: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.5, delay: index * 0.15, ease: "easeOut" }
+  })
+};
   return (
     <div className='w-full max-w-7xl mx-auto px-4 lg:px-8 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-30 mt-30' dir="rtl">
       
@@ -113,7 +112,6 @@ export default function ContactUsForm() {
             </div>
           </motion.div>
 
-          {/* كرت العنوان */}
           <motion.div 
             custom={2}
             variants={cardVariants}
@@ -137,7 +135,7 @@ export default function ContactUsForm() {
         </div>
       </div>
 
-      {/* 2. الجزء الأيسر: الفورم الاحترافي (ياخذ 7 أعمدة ليعطي مساحة مريحة للمدخلات) */}
+  
       <div className='lg:col-span-7 bg-white p-8 md:p-10 rounded-3xl shadow-2xl shadow-zinc-200/40 border border-zinc-100/80 backdrop-blur-sm w-full'>
         <h2 className="text-xl md:text-2xl font-black text-zinc-900 tracking-tight mb-8">
           سجل بياناتك للحصول على استشارة عقارية مجانية
