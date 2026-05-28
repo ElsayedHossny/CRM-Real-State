@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 
 import { useContext } from "react";
 import { UserContext } from "../(Context)/Context";
+import Image from "next/image";
+import Link from "next/link";
 
 // داخل الـ Navbar component:
 
@@ -72,7 +74,7 @@ const Navbar = ({
     { title: "الرئيسية", url: "/" },
     { title: "من نحن", url: "/about" },
     { title: "العقارات", url: "/products" },
-    { title: "اتصل بنا", url: "/contact-us" },
+    { title: "اتصل بنا", url: "/contactUs" },
   ],
   auth = {
     login: { title: "تسجيل الدخول", url: "/login" },
@@ -95,7 +97,7 @@ const Navbar = ({
     <header
       dir="rtl"
       className={cn(
-        "sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b",
+        "sticky  z-50  bg-background/80 backdrop-blur-md border-b",
         className,
       )}
     >
@@ -103,8 +105,13 @@ const Navbar = ({
         {/* ───── Desktop ───── */}
         <nav className="hidden lg:flex items-center justify-between h-16">
           {/* Logo */}
-          <a href={logo.url} className="flex items-center gap-2 shrink-0 group">
-            <img
+          <Link
+            href={logo.url}
+            className="flex items-center gap-2 shrink-0 group"
+          >
+            <Image
+              width={40}
+              height={40}
               src={logo.src}
               className="h-8 w-auto dark:invert transition-transform group-hover:scale-105"
               alt={logo.alt}
@@ -112,7 +119,7 @@ const Navbar = ({
             <span className="text-base font-bold tracking-tight">
               {logo.title}
             </span>
-          </a>
+          </Link>
 
           {/* Links */}
           <NavigationMenu>
@@ -135,10 +142,10 @@ const Navbar = ({
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm">
-                  <a href={auth.login.url}>{auth.login.title}</a>
+                  <Link href={auth.login.url}>{auth.login.title}</Link>
                 </Button>
                 <Button asChild size="sm" className="rounded-full px-5">
-                  <a href={auth.signup.url}>{auth.signup.title}</a>
+                  <Link href={auth.signup.url}>{auth.signup.title}</Link>
                 </Button>
               </>
             )}
@@ -148,14 +155,16 @@ const Navbar = ({
         {/* ───── Mobile ───── */}
         <div className="flex lg:hidden items-center justify-between h-14">
           {/* Logo */}
-          <a href={logo.url} className="flex items-center gap-2">
-            <img
+          <Link href={logo.url} className="flex items-center gap-2">
+            <Image
+              width={40}
+              height={40}
               src={logo.src}
               className="h-7 w-auto dark:invert"
               alt={logo.alt}
             />
             <span className="text-sm font-bold">{logo.title}</span>
-          </a>
+          </Link>
 
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -171,18 +180,20 @@ const Navbar = ({
             <SheetContent side="right" className="w-72 overflow-y-auto">
               <SheetHeader className="mb-6">
                 <SheetTitle>
-                  <a
+                  <Link
                     href={logo.url}
                     className="flex items-center gap-2"
                     onClick={() => setSheetOpen(false)}
                   >
-                    <img
+                    <Image
                       src={logo.src}
                       className="h-7 w-auto dark:invert"
                       alt={logo.alt}
+                      width={40}
+                      height={40}
                     />
                     <span className="text-sm font-bold">{logo.title}</span>
-                  </a>
+                  </Link>
                 </SheetTitle>
                 <SheetDescription className="sr-only">
                   قائمة التنقل الرئيسية
@@ -215,20 +226,20 @@ const Navbar = ({
                   ) : (
                     <>
                       <Button asChild variant="outline" className="w-full">
-                        <a
+                        <Link
                           href={auth.login.url}
                           onClick={() => setSheetOpen(false)}
                         >
                           {auth.login.title}
-                        </a>
+                        </Link>
                       </Button>
                       <Button asChild className="w-full rounded-full">
-                        <a
+                        <Link
                           href={auth.signup.url}
                           onClick={() => setSheetOpen(false)}
                         >
                           {auth.signup.title}
-                        </a>
+                        </Link>
                       </Button>
                     </>
                   )}
@@ -323,7 +334,7 @@ const renderMobileMenuItem = (
   }
 
   return (
-    <a
+    <Link
       key={item.title}
       href={item.url}
       onClick={onClose}
@@ -335,7 +346,7 @@ const renderMobileMenuItem = (
       )}
     >
       {item.title}
-    </a>
+    </Link>
   );
 };
 
@@ -349,7 +360,7 @@ const SubMenuLink = ({
   active?: boolean;
   onClick?: () => void;
 }) => (
-  <a
+  <Link
     href={item.url}
     onClick={onClick}
     className={cn(
@@ -369,7 +380,7 @@ const SubMenuLink = ({
         </p>
       )}
     </div>
-  </a>
+  </Link>
 );
 
 export default Navbar;
