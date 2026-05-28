@@ -1,17 +1,18 @@
-import Navbar from "@/app/(site)/_component/Navbar";
-import UserContextProvider from "./(Context)/Context";
+import Footer from "@/components/footer";
+import Navbar from "@/components/Navbar";
 
-export default function SiteLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <UserContextProvider>
-        <Navbar />
-        <main className="container mx-auto">{children}</main>
-      </UserContextProvider>
+      
+      <Navbar />
+
+      <main className="flex-1 w-full flex flex-col">
+        {children}
+      </main>
+
+      <Footer />
+      
     </>
   );
 }
