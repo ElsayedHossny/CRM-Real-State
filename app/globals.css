@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -116,14 +117,20 @@
     --sidebar-ring: oklch(0.556 0 0);
 }
 
+
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-    }
+  
+
   body {
     @apply bg-background text-foreground;
-    }
+  }
+
   html {
     @apply font-sans;
-    }
+  }
+
+  h2 {
+    @apply text-2xl;
+  }
+
 }
