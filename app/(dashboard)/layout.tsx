@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, Building2, Users, Handshake, BarChart3, Settings, LogOut } from "lucide-react";
 
 const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "لوحه التحكم", href: "/dashboard", icon: Home },
   { name: "Properties", href: "/dashboard/properties", icon: Building2 },
   { name: "Clients", href: "/dashboard/clients", icon: Users },
   { name: "Deals", href: "/dashboard/deals", icon: Handshake },

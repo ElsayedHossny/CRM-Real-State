@@ -1,5 +1,5 @@
 import Footer from "@/components/footer";
-import Navbar from "@/app/(site)/_component/Navbar";
+import Navbar from "@/components/Navbar";
 import UserContextProvider from "./(Context)/Context";
 
 export default function SiteLayout({
