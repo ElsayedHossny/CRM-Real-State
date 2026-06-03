@@ -70,7 +70,7 @@ const Navbar = ({
   menu = [
     { title: "الرئيسية", url: "/" },
     { title: "من نحن", url: "/about" },
-    { title: "العقارات", url: "/products" },
+    { title: "العقارات", url: "/properites" },
     { title: "اتصل بنا", url: "/contactUs" },
   ],
   auth = {
