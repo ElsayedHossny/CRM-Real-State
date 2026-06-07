@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       
       <div className="flex-1 overflow-auto bg-gray-50">
-        <div className="p-8">
+        <div className="p-8 min-h-screen">
           {children}
         </div>
         
