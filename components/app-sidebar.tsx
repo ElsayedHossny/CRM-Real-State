@@ -44,10 +44,10 @@ const menuItems = [
     icon: Layers,
     label: "التصنيفات",
     href: "/categories",
-    children: [
-      { label: "السجل", href: "/record" },
-      { label: "المميز", href: "/featured" },
-    ],
+    // children: [
+    //   { label: "السجل", href: "/record" },
+    //   { label: "المميز", href: "/featured" },
+    // ],
   },
   { icon: ShoppingBag, label: "المنتجات", href: "/products" },
   { icon: Users, label: "المستخدمين", href: "/users" },
