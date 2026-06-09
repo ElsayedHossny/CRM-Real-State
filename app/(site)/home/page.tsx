@@ -8,7 +8,7 @@ import Title from "@/components/titleItem/title";
 
 export default async function Home() {
   const { data: properties }: { data: IProperty[] } = await getProperties();
-  console.log(properties);
+  // console.log(properties);
   // 1. Default Usage (5 visible items, no autoplay)
   const slides = [
     { id: 1, src: slide.src, href: "/product/1" },
@@ -40,7 +40,7 @@ export default async function Home() {
         }}
       >
         {/* overlay */}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
 
         {/* content */}
         <div className="relative z-10 container text-center text-white px-4">
@@ -50,29 +50,30 @@ export default async function Home() {
           </p>
 
           {/* main title */}
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-            اكتشف وحدتك المستقبلية
+          <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-6">
+            اكتشف وحدتك <br />
+            <span className="text-orange-500">المستقبلية</span>
           </h1>
 
           {/* subtitle */}
-          <p className="max-w-2xl mx-auto text-sm md:text-lg text-gray-200 mb-8">
+          <p className="max-w-3xl mx-auto text-lg text-gray-300 leading-8 mb-10">
             أفضل المشاريع العقارية بأفضل الأسعار والمواقع المميزة داخل مصر
           </p>
 
           {/* buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="px-8 py-3 bg-orange-500 hover:bg-orange-600 transition rounded-lg font-medium">
-              تواصل معنا
+          <div className="flex gap-5 justify-center">
+            <button className="bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-xl font-semibold shadow-xl">
+              تصفح المشاريع
             </button>
 
-            <button className="px-8 py-3 border border-white hover:bg-white hover:text-black transition rounded-lg font-medium">
+            <button className="border border-white px-8 py-4 rounded-xl hover:bg-white hover:text-black transition">
               من نحن
             </button>
           </div>
         </div>
       </section>
-      <section className="py-6">
-        <div className="container">
+      <section className="  flex justify-center ">
+        <div className="container bg-gray-100 ">
           {/* title  */}
           <Title
             label="عقارات مصر"
@@ -80,10 +81,10 @@ export default async function Home() {
             subtitle="اكتشف وحدتك المستقبليه سارع بالحجز"
           />
           {/* slider section  */}
-          <div className="sliderSection p-24 m-6 ">
+          <div className="sliderSection  ">
             <ThreeDImageCarousel
               slides={slides}
-              className="my-12 max-w-6xl mx-auto bg-gradient-to-r from-amber-600 to-amber-800 rounded-xl p-6"
+              // className="my-12 max-w-6xl mx-auto bg-gradient-to-r from-amber-600 to-amber-800 rounded-xl p-6"
               autoplay={true}
               delay={3}
             />
@@ -94,7 +95,16 @@ export default async function Home() {
             subtitle="اكتشف وحدتك المستقبليه سارع بالحجز"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-15 mb-15">
+          <div
+            className="
+grid
+grid-cols-1
+sm:grid-cols-2
+lg:grid-cols-3
+xl:grid-cols-4
+gap-8
+"
+          >
             {properties &&
               properties.map((property) => (
                 <PropertyCard key={property._id} property={property} />
