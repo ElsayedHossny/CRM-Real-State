@@ -44,12 +44,21 @@ const menuItems = [
     icon: Layers,
     label: "التصنيفات",
     href: "/categories",
-    // children: [
-    //   { label: "السجل", href: "/record" },
-    //   { label: "المميز", href: "/featured" },
-    // ],
+    children: [
+      { label: "السجل", href: "/record" },
+      { label: "المميز", href: "/featured" },
+    ],
   },
-  { icon: ShoppingBag, label: "المنتجات", href: "/products" },
+  {
+    icon: ShoppingBag,
+    label: "المنتجات",
+    href: "/products",
+    children: [
+      { label: "الشقق السكنية", href: "/residentialapartments" },
+      { label: "الفلل", href: "/villas" },
+      { label: "العقارات السياحية", href: "/touristrealestate" },
+    ],
+  },
   { icon: Users, label: "المستخدمين", href: "/users" },
   { icon: Warehouse, label: "إدارة المخزن", href: "/storeManagement" },
   { icon: Receipt, label: "مصروفات", href: "/expenses" },
