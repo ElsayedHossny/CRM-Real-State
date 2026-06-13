@@ -12,87 +12,33 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import InvoiceTable from "@/components/invoices/InvoiceTable";
+import { useInvoices } from "../../(context)/InvoiceContext";
 
-type InvoiceStatus = "paid" | "partial" | "overdue";
-
-type Invoice = {
-  id: string;
-  invoiceNumber: string;
-  date: string;
-  customerName: string;
-  total: number;
-  paid: number;
-  remaining: number;
-  status: InvoiceStatus;
-};
-
-const mockInvoices: Invoice[] = [
-  {
-    id: "1",
-    invoiceNumber: "INV-2024-001",
-    date: "2024/04/15",
-    customerName: "شركة الأفق للتقنية",
-    total: 12500,
-    paid: 12500,
-    remaining: 0,
-    status: "paid",
-  },
-  {
-    id: "2",
-    invoiceNumber: "INV-2024-002",
-    date: "2024/04/18",
-    customerName: "مؤسسة النور التجارية",
-    total: 8750,
-    paid: 4000,
-    remaining: 4750,
-    status: "partial",
-  },
-  {
-    id: "3",
-    invoiceNumber: "INV-2024-003",
-    date: "2024/04/20",
-    customerName: "متجر الرياض الإلكتروني",
-    total: 33200,
-    paid: 0,
-    remaining: 33200,
-    status: "overdue",
-  },
-  {
-    id: "4",
-    invoiceNumber: "INV-2024-004",
-    date: "2024/04/22",
-    customerName: "مكتبة ومطبعة النجاح",
-    total: 1500,
-    paid: 1500,
-    remaining: 0,
-    status: "paid",
-  },
-];
 
 export default function InvoicesList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
-
+const {invoices} = useInvoices()
   const statuses = [
-    { label: "الكل", value: "all", count: mockInvoices.length },
+    { label: "الكل", value: "all", count: invoices.length },
     {
       label: "مدفوعة",
       value: "paid",
-      count: mockInvoices.filter((i) => i.status === "paid").length,
+      count: invoices.filter((i) => i.status === "paid").length,
     },
     {
       label: "جزئية",
       value: "partial",
-      count: mockInvoices.filter((i) => i.status === "partial").length,
+      count: invoices.filter((i) => i.status === "partial").length,
     },
     {
       label: "متأخرة",
       value: "overdue",
-      count: mockInvoices.filter((i) => i.status === "overdue").length,
+      count: invoices.filter((i) => i.status === "overdue").length,
     },
   ];
 
-  const filteredInvoices = mockInvoices.filter((invoice) => {
+  const filteredInvoices = invoices.filter((invoice) => {
     const matchesStatus =
       activeStatus === "all" || invoice.status === activeStatus;
 
@@ -127,7 +73,7 @@ export default function InvoicesList() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="إجمالي الفواتير"
-          value={mockInvoices.length.toString()}
+          value={invoices.length.toString()}
           icon={<FileText className="text-blue-500" />}
         />
 
