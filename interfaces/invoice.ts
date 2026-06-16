@@ -2,7 +2,7 @@ export type InvoiceStatus = "paid" | "partial" | "overdue" | "draft"
 
 export interface InvoiceData {
     id :string
-    invoiceNumber : string //>>> how string
+    invoiceNumber : string 
     date : string
     customerName : string
     total : number
@@ -10,3 +10,5 @@ export interface InvoiceData {
     remaining : number
     status : InvoiceStatus
 }
+
+

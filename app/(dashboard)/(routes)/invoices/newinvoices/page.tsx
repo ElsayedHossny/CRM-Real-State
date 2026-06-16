@@ -1,5 +1,7 @@
 "use client"
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useInvoices } from '../../../(context)/InvoiceContext';
 
 function generateInvoiceNumber() {
   const year = new Date().getFullYear()
@@ -7,55 +9,79 @@ function generateInvoiceNumber() {
   return `INV-${year}-${randomDigest}`;
 }
 
+type Product = {
+  id: number
+  name: string
+  price: number
+  discount: number
+  tax: number
+}
+
 export default function NewInvoice() {
+  const { addInvoice } = useInvoices()
+  const router = useRouter()
+
   const [invoiceNumber] = useState(generateInvoiceNumber)
-  const [products, setProducts] = useState(() => [
+  const [customerName, setCustomerName] = useState('')
+  const [invoiceDate, setInvoiceDate] = useState('')
+  const [products, setProducts] = useState<Product[]>(() => [
     { id: Date.now(), name: "", price: 0, discount: 0, tax: 15 }
   ])
   const [extraDiscount, setExtraDiscount] = useState(0)
-
   const [paidAmount, setPaidAmount] = useState(0)
 
   const addProduct = () => {
-    setProducts(p => [
-      ...p, { id: Date.now(), name: "", price: 0, discount: 0, tax: 15 }
-    ])
+    setProducts((p: Product[]) => [...p, { id: Date.now(), name: "", price: 0, discount: 0, tax: 15 }])
   }
 
   const removeProduct = (id: number) => {
-    setProducts(products => products.length > 1 ? products.filter(p => p.id !== id) : products);
-  };
-
-  const updateProduct = (id: number, field: string, value: string) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    setProducts((prev: Product[]) => prev.length > 1 ? prev.filter((p: Product) => p.id !== id) : prev)
   }
 
-  const calcRowTotal = (p: { price: number, discount: number, tax: number }) => {
+  const updateProduct = (id: number, field: string, value: string) => {
+    setProducts((prev: Product[]) => prev.map((p: Product) => p.id === id ? { ...p, [field]: value } : p))
+  }
+
+  const calcRowTotal = (p: Product) => {
     const price = parseFloat(String(p.price)) || 0
     const discount = parseFloat(String(p.discount)) || 0
     const tax = parseFloat(String(p.tax)) || 0
-    const afterDiscount = price * (1 - discount / 100)
-    return afterDiscount * (1 + tax / 100)
+    return price * (1 - discount / 100) * (1 + tax / 100)
   }
 
-  const subtotal = products.reduce((sum, p) => sum + (parseFloat(String(p.price)) || 0), 0)
+  const subtotal = products.reduce((sum: number, p: Product) => sum + (parseFloat(String(p.price)) || 0), 0)
 
-  const totalRowDiscounts = products.reduce((sum, p) => {
+  const totalRowDiscounts = products.reduce((sum: number, p: Product) => {
     const price = parseFloat(String(p.price)) || 0
     const discount = parseFloat(String(p.discount)) || 0
     return sum + price * (discount / 100)
   }, 0)
 
-
-  const totalTax = products.reduce((sum, p) => {
+  const totalTax = products.reduce((sum: number, p: Product) => {
     const price = parseFloat(String(p.price)) || 0
     const discount = parseFloat(String(p.discount)) || 0
     const tax = parseFloat(String(p.tax)) || 0
     return sum + price * (1 - discount / 100) * (tax / 100)
   }, 0)
-  const grandTotal = subtotal - totalRowDiscounts - (parseFloat(String(extraDiscount)) || 0) + totalTax
-  
-  const remaining = grandTotal - paidAmount 
+
+  const grandTotal = subtotal - totalRowDiscounts - extraDiscount + totalTax
+  const remaining = grandTotal - paidAmount
+
+  const handleSave = () => {
+    if (!customerName) return alert('من فضلك ادخل اسم العميل')
+    addInvoice({
+      id: Date.now().toString(),
+      invoiceNumber,
+      date: invoiceDate || new Date().toLocaleDateString('ar-SA'),
+      customerName,
+      total: grandTotal,
+      paid: paidAmount,
+      remaining,
+      status: paidAmount >= grandTotal ? 'paid' : paidAmount > 0 ? 'partial' : 'overdue'
+    })
+    router.push('/invoices')
+  }
+
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-sm">
       <div className="mb-6">
@@ -64,6 +90,7 @@ export default function NewInvoice() {
       </div>
 
       <div className="flex flex-col gap-6 w-5xl">
+        {/* معلومات الفاتورة */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-green-500">🧾</span>
@@ -72,11 +99,22 @@ export default function NewInvoice() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-gray-600 mb-1">الوحده/العميل <span className="text-red-500">*</span></label>
-              <input type='text' placeholder='ادخل اسم العميل' className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500" />
+              <input
+                type='text'
+                value={customerName}
+                onChange={e => setCustomerName(e.target.value)}
+                placeholder='ادخل اسم العميل'
+                className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500"
+              />
             </div>
             <div>
               <label className="block text-gray-600 mb-1">تاريخ الفاتورة</label>
-              <input type="date" className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500" />
+              <input
+                type="date"
+                value={invoiceDate}
+                onChange={e => setInvoiceDate(e.target.value)}
+                className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500"
+              />
             </div>
             <div>
               <label className="block text-gray-600 mb-1">تاريخ الاستحقاق</label>
@@ -96,6 +134,7 @@ export default function NewInvoice() {
           </div>
         </div>
 
+        {/* المنتجات */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
@@ -125,41 +164,22 @@ export default function NewInvoice() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((p, i) => (
+                {products.map((p: Product, i: number) => (
                   <tr key={p.id} className="border-b border-gray-100">
                     <td className="p-1 text-gray-500 text-center">{i + 1}</td>
                     <td className="p-1">
-                      <input type="text"
-                        value={p.name}
-                        onChange={e => updateProduct(p.id, 'name', e.target.value)}
-                        placeholder="اسم المنتج أو الخدمة"
-                        className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500"
-                      />
+                      <input type="text" value={p.name} onChange={e => updateProduct(p.id, 'name', e.target.value)} placeholder="اسم المنتج أو الخدمة" className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500" />
                     </td>
                     <td className="p-1">
-                      <input type="number"
-                        value={p.price}
-                        onChange={e => updateProduct(p.id, 'price', e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 outline-none text-center"
-                      />
+                      <input type="number" value={p.price} onChange={e => updateProduct(p.id, 'price', e.target.value)} className="w-full border border-gray-300 rounded-md p-2 outline-none text-center" />
                     </td>
                     <td className="p-1">
-                      <input type="number"
-                        value={p.discount}
-                        onChange={e => updateProduct(p.id, 'discount', e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 outline-none text-center"
-                      />
+                      <input type="number" value={p.discount} onChange={e => updateProduct(p.id, 'discount', e.target.value)} className="w-full border border-gray-300 rounded-md p-2 outline-none text-center" />
                     </td>
                     <td className="p-1">
-                      <input type="number"
-                        value={p.tax}
-                        onChange={e => updateProduct(p.id, 'tax', e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 outline-none text-center"
-                      />
+                      <input type="number" value={p.tax} onChange={e => updateProduct(p.id, 'tax', e.target.value)} className="w-full border border-gray-300 rounded-md p-2 outline-none text-center" />
                     </td>
-                    <td className="p-3 font-bold text-gray-800 text-center">
-                      {calcRowTotal(p).toFixed(2)}
-                    </td>
+                    <td className="p-3 font-bold text-gray-800 text-center">{calcRowTotal(p).toFixed(2)}</td>
                     <td className="p-3 text-center">
                       <button onClick={() => removeProduct(p.id)} className="text-gray-300 hover:text-red-400 transition-colors">
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -174,6 +194,7 @@ export default function NewInvoice() {
           </div>
         </div>
 
+        {/* الدفع والحسابات */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
             <h3 className="font-semibold text-gray-800 mb-4">معلومات الدفع</h3>
@@ -186,7 +207,7 @@ export default function NewInvoice() {
                   onChange={e => setPaidAmount(parseFloat(e.target.value) || 0)}
                   className="w-full border border-gray-300 rounded-md p-2 outline-none focus:border-green-500 text-left"
                   dir="ltr"
-                  />
+                />
               </div>
               <div>
                 <label className="block text-gray-600 mb-1">المحفظة</label>
@@ -232,6 +253,14 @@ export default function NewInvoice() {
                   <span>الضريبة</span>
                   <span className="font-medium text-gray-800">+ {totalTax.toFixed(2)}</span>
                 </div>
+                <div className="flex justify-between items-center text-gray-600">
+                  <span>المدفوع</span>
+                  <span className="font-medium text-green-600">− {paidAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-gray-600">
+                  <span>المتبقي</span>
+                  <span className="font-medium text-red-500">{remaining.toFixed(2)}</span>
+                </div>
               </div>
             </div>
             <div className="mt-8 pt-4 border-t border-gray-100 flex justify-between items-center">
@@ -241,8 +270,12 @@ export default function NewInvoice() {
           </div>
         </div>
 
+        {/* الأزرار */}
         <div className="flex flex-wrap items-center gap-3 mt-4">
-          <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium flex items-center gap-2 transition-colors">
+          <button
+            onClick={handleSave}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium flex items-center gap-2 transition-colors"
+          >
             <span>💾</span> حفظ وإرسال
           </button>
           <button className="bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 px-6 py-2 rounded-md font-medium flex items-center gap-2 transition-colors">
@@ -251,7 +284,7 @@ export default function NewInvoice() {
           <button className="bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-md font-medium transition-colors">
             حفظ كمسودة
           </button>
-          <button className="bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-md font-medium transition-colors">
+          <button onClick={() => router.back()} className="bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-md font-medium transition-colors">
             إلغاء
           </button>
         </div>

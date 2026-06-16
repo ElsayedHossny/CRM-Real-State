@@ -31,7 +31,7 @@ const Footer = () => {
           </h1>
           <div className="flex flex-col items-center sm:items-start gap-2.5 text-sm">
             <Link
-              href="/"
+              href="/Home"
               className="hover:text-orange-400 transition-colors duration-200"
             >
               الصفحة الرئيسية
@@ -43,13 +43,13 @@ const Footer = () => {
               نبذة عنا
             </Link>
             <Link
-              href="/categoris"
+              href="/properites"
               className="hover:text-orange-400 transition-colors duration-200"
             >
-              التصنيفات
+              المنتجات 
             </Link>
             <Link
-              href="/contact-us"
+              href="/contactUs"
               className="hover:text-orange-400 transition-colors duration-200"
             >
               تواصل معنا
