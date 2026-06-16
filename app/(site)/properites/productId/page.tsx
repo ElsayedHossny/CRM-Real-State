@@ -1,4 +1,4 @@
-import getPropertyById from "@/app/services/getPropertyById.services";
+import getPropertyById from "@/services/getPropertyById.services";
 import Image from "next/image";
 
 export default async function ProductDetails({
