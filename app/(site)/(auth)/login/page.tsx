@@ -58,7 +58,7 @@ export default function LoginForm() {
       }
 
       localStorage.setItem("userToken2", data.token);
-      setUserToken(data.token);
+      setUserToken?.(data.token);
       router.push("/");
     } catch {
       form.setError("root", { message: "حدث خطأ، يرجى المحاولة لاحقاً" });
