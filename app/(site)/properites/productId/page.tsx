@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import getPropertyById from "@/services/getPropertyById.services";
 import Image from "next/image";
 
