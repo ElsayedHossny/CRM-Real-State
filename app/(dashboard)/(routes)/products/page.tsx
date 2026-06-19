@@ -1,8 +1,6 @@
-//
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import PropertyList from "@/components/produsts/PropertyList";
 import { properties } from "@/data/properites";
 
@@ -14,70 +12,126 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import Link from "next/link";
+import {
+  PropertyTypeFilters,
+  PropertyTypeFilter,
+  AreaFilter,
+} from "@/components/produsts/PropertyFilters";
 
 export default function Products() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeFilter, setActiveFilter] = useState<PropertyTypeFilter>("all");
+  const [activeAreaFilter, setActiveAreaFilter] = useState<AreaFilter>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const itemsPerPage = 4;
 
-  const totalPages = Math.ceil(properties.length / itemsPerPage);
+  const counts = useMemo(() => {
+    return {
+      all: properties.length,
+      apartment: properties.filter((p) => p.type === "apartment").length,
+      villa: properties.filter((p) => p.type === "villa").length,
+      chalet: properties.filter((p) => p.type === "chalet").length,
+    };
+  }, []);
 
+  const filteredProperties = useMemo(() => {
+    return properties.filter((p) => {
+      const matchType = activeFilter === "all" || p.type === activeFilter;
+
+      let matchArea = true;
+      if (activeAreaFilter === "small") matchArea = p.area < 100;
+      else if (activeAreaFilter === "medium")
+        matchArea = p.area >= 100 && p.area <= 250;
+      else if (activeAreaFilter === "large")
+        matchArea = p.area > 250 && p.area <= 400;
+      else if (activeAreaFilter === "xlarge") matchArea = p.area > 400;
+
+      return matchType && matchArea;
+    });
+  }, [activeFilter, activeAreaFilter]);
+
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-
-  const currentData = properties.slice(startIndex, startIndex + itemsPerPage);
+  const currentData = filteredProperties.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   const goToPage = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
   };
 
-  return (
-    <div className="space-y-10">
-      <button className="px-4 cursor-pointer py-2 mb-0 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-800">
-        <Link href={"products/create"}> اضافه عقار جديد</Link>
-      </button>
+  const handleFilterChange = (type: PropertyTypeFilter) => {
+    setActiveFilter(type);
+    setCurrentPage(1);
+  };
 
-      {/* LIST */}
-      <PropertyList properties={currentData} />
+  const handleAreaFilterChange = (area: AreaFilter) => {
+    setActiveAreaFilter(area);
+    setCurrentPage(1);
+  };
+
+  return (
+    <div className="space-y-6 p-4 md:p-6" dir="rtl">
+      {/* الفلاتر المحدثة التي تحتوي على كل عناصر التحكم وزر الإضافة */}
+      <PropertyTypeFilters
+        active={activeFilter}
+        onChange={handleFilterChange}
+        counts={counts}
+        activeArea={activeAreaFilter}
+        onAreaChange={handleAreaFilterChange}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
+
+      {/* منطقة عرض البيانات */}
+      <div className="w-full">
+        {filteredProperties.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-10">
+            لا توجد عقارات تطابق خيارات التصفية الحالية
+          </p>
+        ) : (
+          <PropertyList properties={currentData} viewMode={viewMode} />
+        )}
+      </div>
 
       {/* PAGINATION */}
-      <Pagination>
-        <PaginationContent>
-          {/* Prev */}
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => goToPage(currentPage - 1)}
-              className="cursor-pointer"
-            />
-          </PaginationItem>
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => goToPage(currentPage - 1)}
+                className="cursor-pointer"
+              />
+            </PaginationItem>
 
-          {/* Pages */}
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const page = i + 1;
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const page = i + 1;
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    isActive={page === currentPage}
+                    onClick={() => goToPage(page)}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
 
-            return (
-              <PaginationItem key={page}>
-                <PaginationLink
-                  isActive={page === currentPage}
-                  onClick={() => goToPage(page)}
-                  className="cursor-pointer"
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          })}
-
-          {/* Next */}
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => goToPage(currentPage + 1)}
-              className="cursor-pointer"
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => goToPage(currentPage + 1)}
+                className="cursor-pointer"
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }

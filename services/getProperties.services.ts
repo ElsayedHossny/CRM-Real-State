@@ -68,5 +68,44 @@ export const propertyService = {
   async delete(id: string) {
     console.log("Delete Property", id);
   },
+
+    // الدالة الجديدة لجلب التصنيفات ديناميكياً
+  async getCategories() {
+    try {
+      const res = await fetch("https://ecommerce.routemisr.com/api/v1/categories"); // أو الـ Endpoint الخاص بك
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+
+      const data = await res.json();
+      return data.data; // هيرجع مصفوفة فيها كل التصنيفات (شقق، فلل، شاليهات...)
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  async createCategory(formData: FormData) {
+    try {
+      // ملحوظة: استخدمنا FormData لأن إضافة كاتيغوري في RouteMisr بتحتاج ترفع ملف صورة
+      const res = await fetch("https://ecommerce.routemisr.com/api/v1/categories", {
+        method: "POST",
+        body: formData, // بيحتوي على الـ name والـ image
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "فشل إضافة القسم الجديد");
+      }
+
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
   
 };
+
+
+

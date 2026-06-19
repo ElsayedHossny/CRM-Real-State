@@ -3,7 +3,8 @@ import { Property } from "@/types/properites";
 export const properties: Property[] = [
   {
     id: 1,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر", // الحقل الجديد للمساحة النصية
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -16,7 +17,8 @@ export const properties: Property[] = [
   },
   {
     id: 2,
-    type: "100-250متر",
+    type: "apartment",
+    areaRange: "100-250متر",
     beds: "02",
     location: "القاهره",
     price: 1500000,
@@ -29,7 +31,8 @@ export const properties: Property[] = [
   },
   {
     id: 3,
-    type: "300متر",
+    type: "villa",
+    areaRange: "300متر",
     beds: "03",
     location: "الشرقيه",
     price: 2000000,
@@ -42,7 +45,8 @@ export const properties: Property[] = [
   },
   {
     id: 4,
-    type: "400متر",
+    type: "apartment",
+    areaRange: "400متر",
     beds: "01",
     location: "الغربيه",
     price: 800000,
@@ -55,7 +59,8 @@ export const properties: Property[] = [
   },
   {
     id: 5,
-    type: "500متر",
+    type: "villa",
+    areaRange: "500متر",
     beds: "04+",
     location: "المنوفيه",
     price: 3500000,
@@ -68,7 +73,8 @@ export const properties: Property[] = [
   },
   {
     id: 6,
-    type: "100-250متر",
+    type: "chalet",
+    areaRange: "100-250متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 1200000,
@@ -81,7 +87,8 @@ export const properties: Property[] = [
   },
   {
     id: 7,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -91,9 +98,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 8,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -103,9 +112,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 9,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -115,9 +126,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 10,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -127,9 +140,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 11,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -139,9 +154,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 12,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -151,9 +168,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 13,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -163,9 +182,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 14,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,
@@ -175,9 +196,11 @@ export const properties: Property[] = [
     title: "شقة شرم الشيخ",
     description: "شقة مميزة في قلب شرم الشيخ، إطلالة رائعة وتشطيب فاخر.",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-  },{
+  },
+  {
     id: 15,
-    type: "100متر",
+    type: "apartment",
+    areaRange: "100متر",
     beds: "الارضي",
     location: "شرم الشيخ",
     price: 500000,

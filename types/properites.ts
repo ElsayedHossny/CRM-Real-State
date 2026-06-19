@@ -2,6 +2,7 @@ export type Property = {
   id: number;
   type: string;
   beds: string;
+  areaRange:string,
   location: string;
   price: number;
   bookType: string;
