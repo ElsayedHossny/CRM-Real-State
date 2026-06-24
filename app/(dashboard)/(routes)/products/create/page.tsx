@@ -1,351 +1,502 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Property } from "@/types/properites";
+import { Category } from "@/types/category";
 import {
   ArrowRight,
   Image as ImageIcon,
   Loader2,
   UploadCloud,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import Cookies from "js-cookie";
+import { getAllCategories } from "@/services/category.service";
 
-const numericFields = ["price", "area", "baths"];
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const emptyProperty: Omit<Property, "id" | "image"> = {
+// 🌟 سيبنا الـ price بس كحقل رقمي ثابت
+const NUMERIC_FIELDS = ["price"] as const;
+type NumericField = (typeof NUMERIC_FIELDS)[number];
+
+const EMPTY_FORM = {
   title: "",
   location: "",
-  type: "", // بيشيل الـ slug أو اسم الـ category
+  type: "", // بيخزن الـ slug بتاع الكاتجوري المختارة
   price: 0,
-  area: 0,
-  baths: 0,
-  beds: "",
   bookType: "",
-  areaRange: "",
   description: "",
 };
 
-// الأقسام الافتراضية للفرونت إند لحين الربط
-const defaultCategories = [
-  { _id: "1", name: "شقق", slug: "apartment" },
-  { _id: "2", name: "فلل", slug: "villa" },
-  { _id: "3", name: "شاليهات", slug: "chalet" },
-];
+// ─── Service ──────────────────────────────────────────────────────────────────
+
+async function createProperty(formData: FormData): Promise<void> {
+  const token = Cookies.get("admin_token");
+
+  const res = await fetch(
+    "https://back-end-crm-project.vercel.app/api/properties/addproperity",
+    {
+      method: "POST",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    },
+  );
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "فشل إضافة العقار");
+  }
+}
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+function validateForm(data: typeof EMPTY_FORM): string | null {
+  if (!data.title.trim()) return "عنوان العقار مطلوب";
+  if (!data.location.trim()) return "موقع العقار مطلوب";
+  if (!data.type) return "نوع العقار مطلوب";
+  if (!data.bookType) return "نوع الإعلان مطلوب";
+  if (!data.price || data.price <= 0) return "السعر يجب أن يكون أكبر من صفر";
+  return null;
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+type ToastState = { type: "success" | "error"; message: string } | null;
+
+function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [toast, onClose]);
+
+  if (!toast) return null;
+
+  const isSuccess = toast.type === "success";
+  return (
+    <div
+      className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold ${
+        isSuccess ? "bg-green-700 text-white" : "bg-red-600 text-white"
+      }`}
+    >
+      {isSuccess ? (
+        <CheckCircle2 className="w-4 h-4 shrink-0" />
+      ) : (
+        <AlertCircle className="w-4 h-4 shrink-0" />
+      )}
+      <span>{toast.message}</span>
+    </div>
+  );
+}
+
+// ─── Field ────────────────────────────────────────────────────────────────────
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-slate-700">
+        {label}
+        {required && <span className="text-red-500 mr-1">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputClass =
+  "w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all";
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PropertyCreateForm() {
-  const [formData, setFormData] =
-    useState<Omit<Property, "id" | "image">>(emptyProperty);
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryData, setSelectedCategoryData] =
+    useState<Category | null>(null);
+  const [dynamicFilterValues, setDynamicFilterValues] = useState<
+    Record<string, string>
+  >({});
 
-  // الـ States الخاصة بالملفات والتحميل والأقسام
-  const [categories, setCategories] = useState(defaultCategories);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [toast, setToast] = useState<ToastState>(null);
   const router = useRouter();
 
-  // جلب الأقسام المتوفرة ليعرضها في قائمة "النوع"
+  // جلب التصنيفات
   useEffect(() => {
-    const localCats = localStorage.getItem("custom_categories");
-    if (localCats) {
-      const parsed = JSON.parse(localCats);
-      setCategories([...defaultCategories, ...parsed]);
-    }
+    const fetchLiveCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const responseData = await getAllCategories();
+        if (
+          responseData &&
+          responseData.success &&
+          Array.isArray(responseData.data)
+        ) {
+          setCategories(responseData.data);
+        } else if (Array.isArray(responseData)) {
+          setCategories(responseData);
+        }
+      } catch (err) {
+        console.error("فشل في جلب التصنيفات الحية لنموذج العقار:", err);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchLiveCategories();
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const { name, value } = e.target;
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
-    setFormData((prev) => ({
+  const handleChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) => {
+      const { name, value } = e.target;
+      setFormData((prev) => {
+        const updated = {
+          ...prev,
+          [name]: NUMERIC_FIELDS.includes(name as NumericField)
+            ? Number(value)
+            : value,
+        };
+
+        if (name === "type") {
+          const matchedCat =
+            categories.find((cat) => cat.slug === value) || null;
+          setSelectedCategoryData(matchedCat);
+          setDynamicFilterValues({});
+        }
+
+        return updated;
+      });
+    },
+    [categories],
+  );
+
+  const handleDynamicFilterChange = (filterName: string, value: string) => {
+    setDynamicFilterValues((prev) => ({
       ...prev,
-      [name]: numericFields.includes(name) ? Number(value) : value,
+      [filterName]: value,
     }));
   };
 
-  // معالجة اختيار ملف الصورة وعمل معاينة
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  const handleImageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (imagePreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file)); // رابط مؤقت للمعاينة البصرية
-    }
-  };
+      setImagePreview(URL.createObjectURL(file));
+    },
+    [imagePreview],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setError("");
 
-    // التحقق من الحقول الأساسية
-    if (!formData.title || !formData.type || !formData.location) {
-      setError("برجاء ملء الحقول الأساسية (العنوان، الموقع، ونوع العقار)");
-      setIsSaving(false);
+    const validationError = validateForm(formData);
+    if (validationError) {
+      setToast({ type: "error", message: validationError });
       return;
     }
 
+    setIsSaving(true);
+
     try {
-      // ─── تجهيز الـ FormData للـ API الحقيقية مستقبلاً ───
+      const categoryValue = selectedCategoryData
+        ? selectedCategoryData._id
+        : "1";
+
+      // 🌟 مصفوفة الـ features بقت بتعتمد كلياً على اللي جاي ديناميكياً من الباك إند
+      const features: { filterName: string; value: string }[] = [];
+
+      // سحب أي فلتر تم اختياره وضخه داخل المصفوفة فوراً
+      Object.entries(dynamicFilterValues).forEach(([filterName, value]) => {
+        if (value) {
+          features.push({ filterName, value });
+        }
+      });
+
       const dataToSend = new FormData();
-      dataToSend.append("title", formData.title);
-      dataToSend.append("location", formData.location);
+      dataToSend.append("title", formData.title.trim());
+      dataToSend.append("location", formData.location.trim());
+      dataToSend.append("region", formData.location.trim());
       dataToSend.append("type", formData.type);
       dataToSend.append("price", String(formData.price));
-      dataToSend.append("area", String(formData.area));
-      dataToSend.append("baths", String(formData.baths));
-      dataToSend.append("beds", formData.beds);
       dataToSend.append("bookType", formData.bookType);
-      dataToSend.append("description", formData.description);
+      dataToSend.append("description", formData.description.trim());
+      dataToSend.append("category", categoryValue);
+      dataToSend.append("features", JSON.stringify(features));
 
       if (imageFile) {
-        dataToSend.append("image", imageFile); // إرسال ملف الصورة الحقيقي هنا
+        dataToSend.append("images", imageFile);
       }
 
-      // ─── كود الـ API الجاهز للتشغيل مستقبلاً ───
-      /*
-      const res = await fetch("https://ecommerce.routemisr.com/api/v1/products", {
-        method: "POST",
-        body: dataToSend, // نرسل الـ FormData مباشرة دون Headers (المتصفح سيقوم بوضعها تلقائياً)
-      });
-      if (!res.ok) throw new Error("فشل إضافة العقار في السيرفر");
-      */
+      await createProperty(dataToSend);
 
-      // محاكاة حفظ مؤقت في السيرفر حالياً
-      console.log(
-        "تم تجميع البيانات بنجاح وجاهزة للـ API:",
-        formData,
-        imageFile,
-      );
+      setToast({ type: "success", message: "تم إضافة العقار بنجاح 🎉" });
+      setFormData(EMPTY_FORM);
+      setSelectedCategoryData(null);
+      setDynamicFilterValues({});
+      setImageFile(null);
+      setImagePreview(null);
 
-      alert("تم إضافة العقار بنجاح!");
-      router.push("/products");
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || "حصل خطأ أثناء الحفظ، حاول مرة أخرى");
+      setTimeout(() => {
+        router.push("/products");
+        router.refresh();
+      }, 1500);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "حدث خطأ غير متوقع، حاول مرة أخرى";
+      setToast({ type: "error", message });
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className=" mt-6 mx-auto p-6 md:p-8 space-y-6 bg-white border border-slate-100 rounded-2xl shadow-sm"
-      dir="rtl"
-    >
-      {/* هيدر الصفحة وأزرار الانتقال */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">إضافة عقار جديد</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            أدخل بيانات العقار بدقة، وسيتم تحديث الفلاتر والأعداد تلقائياً.
-          </p>
-        </div>
+    <>
+      <Toast toast={toast} onClose={() => setToast(null)} />
 
-        <Link
-          href="/products"
-          className="px-3 py-2 hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-        >
-          <ArrowRight className="w-4 h-4" />
-          <span>رجوع للقائمة</span>
-        </Link>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 text-red-600 text-xs p-3.5 rounded-xl border border-red-100 font-medium text-center animate-shake">
-          {error}
-        </div>
-      )}
-
-      {/* صف: العنوان والموقع */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field label="عنوان العقار (اسم الإعلان)">
-          <input
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="مثال: شقة مودرن مطلة على البحر"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
-          />
-        </Field>
-
-        <Field label="الموقع المنطقي">
-          <input
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="مثال: القاهرة، التجمع الخامس"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
-          />
-        </Field>
-      </div>
-
-      {/* صف: نوع العقار ونوع الحجز */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field label="نوع العقار (التصنيف)">
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all cursor-pointer"
-          >
-            <option value="">اختر نوع العقار من هنا..</option>
-            {categories.map((cat) => (
-              <option key={cat._id} value={cat.slug}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="نوع الحجز">
-          <select
-            name="bookType"
-            value={formData.bookType}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all cursor-pointer"
-          >
-            <option value="">اختر مدة الحجز..</option>
-            <option value="Daily">يومي (Daily)</option>
-            <option value="Weekly">أسبوعي (Weekly)</option>
-            <option value="Monthly">شهري (Monthly)</option>
-            <option value="Yearly">سنوي (Yearly)</option>
-          </select>
-        </Field>
-      </div>
-
-      {/* شبكة الأرقام الأربعة المتجاوبة */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Field label="السعر (ج.م)">
-          <input
-            name="price"
-            type="number"
-            value={formData.price || ""}
-            onChange={handleChange}
-            placeholder="0"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
-          />
-        </Field>
-
-        <Field label="المساحة (م²)">
-          <input
-            name="area"
-            type="number"
-            value={formData.area || ""}
-            onChange={handleChange}
-            placeholder="0"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
-          />
-        </Field>
-
-        <Field label="الحمامات">
-          <input
-            name="baths"
-            type="number"
-            value={formData.baths || ""}
-            onChange={handleChange}
-            placeholder="0"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
-          />
-        </Field>
-
-        <Field label="الغرف / الطابق">
-          <input
-            name="beds"
-            value={formData.beds}
-            onChange={handleChange}
-            placeholder="مثال: 3 غرف"
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all"
-          />
-        </Field>
-      </div>
-
-      {/* حقل رفع الصورة الجديد بالكامل مع الـ المعاينة البصرية */}
-      <Field label="صورة العقار الرئيسية">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-          <label className="md:col-span-3 border-2 border-dashed border-slate-200 hover:border-green-600 bg-slate-50/50 hover:bg-white rounded-xl p-5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-28 text-center group">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              disabled={isSaving}
-              className="hidden"
-            />
-            <UploadCloud className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
-            <span className="text-xs font-semibold text-slate-700">
-              اضغط لرفع صورة العقار الفورية
-            </span>
-            <span className="text-[10px] text-slate-400">
-              يدعم صيغ JPG, PNG, WEBP
-            </span>
-          </label>
-
-          {/* بوكس المعاينة */}
-          <div className="border border-slate-100 bg-slate-50 rounded-xl h-28 overflow-hidden flex items-center justify-center relative shadow-inner">
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-1 text-slate-400">
-                <ImageIcon className="w-4 h-4" />
-                <span className="text-[10px]">لا توجد صورة</span>
-              </div>
-            )}
+      <form
+        onSubmit={handleSubmit}
+        className="mt-6 mx-auto p-6 md:p-8 space-y-6 bg-white border border-slate-100 rounded-2xl shadow-sm"
+        dir="rtl"
+        noValidate
+      >
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">
+              إضافة عقار جديد
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              الحقول المعلمة بـ <span className="text-red-500">*</span> إلزامية
+            </p>
           </div>
+
+          <Link
+            href="/products"
+            className="px-3 py-2 hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <ArrowRight className="w-4 h-4" />
+            <span>رجوع للقائمة</span>
+          </Link>
         </div>
-      </Field>
 
-      {/* الوصف */}
-      <Field label="الوصف والتفاصيل الإضافية">
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="اكتب وصفاً تفصيلياً لعوامل جذب العقار والميزات الخاصة هنا.."
-          rows={4}
-          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600 transition-all resize-none"
-        />
-      </Field>
+        {/* ── Row 1: Title & Location ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="عنوان العقار" required>
+            <input
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="مثال: شقة مودرن مطلة على البحر"
+              className={inputClass}
+            />
+          </Field>
 
-      {/* زر الحفظ الأخضر المحاذي لأسفل */}
-      <div className="pt-4 border-t border-slate-100 flex justify-end">
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="w-full md:w-auto md:min-w-[160px] px-6 h-12 bg-green-700 hover:bg-green-800 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>جاري الحفظ...</span>
-            </>
-          ) : (
-            <span>إضافة العقار وحفظه</span>
+          <Field label="الموقع (المحافظة / المدينة)" required>
+            <input
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              placeholder="مثال: القاهرة / التجمع الخامس"
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        {/* ── Row 2: Type & BookType ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="نوع العقار" required>
+            <div className="relative">
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                disabled={isLoadingCategories}
+                className={`${inputClass} cursor-pointer disabled:opacity-60`}
+              >
+                <option value="">
+                  {isLoadingCategories
+                    ? "جاري تحميل الأنواع..."
+                    : "اختر نوع العقار..."}
+                </option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              {isLoadingCategories && (
+                <Loader2 className="w-4 h-4 animate-spin absolute left-3 top-3.5 text-slate-400" />
+              )}
+            </div>
+          </Field>
+
+          <Field label="نوع الإعلان" required>
+            <select
+              name="bookType"
+              value={formData.bookType}
+              onChange={handleChange}
+              className={`${inputClass} cursor-pointer`}
+            >
+              <option value="">اختر النوع...</option>
+              <option value="sale">للبيع</option>
+              <option value="rent">للإيجار</option>
+            </select>
+          </Field>
+        </div>
+
+        {/* ── 🌟 الفلاتر الديناميكية القادمة من الباك إند (بما فيها المساحة والغرف لو ضفتهم كفلاتر هناك) ── */}
+        {selectedCategoryData &&
+          selectedCategoryData.filiters &&
+          selectedCategoryData.filiters.length > 0 && (
+            <div className="p-4 bg-slate-50/60 border border-dashed border-slate-200 rounded-2xl space-y-4">
+              <h4 className="text-xs font-bold text-green-700">
+                المواصفات الإضافية الخاصة بـ ({selectedCategoryData.name})
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {selectedCategoryData.filiters.map((filter, index) => (
+                  <Field key={index} label={filter.filterName}>
+                    <select
+                      value={dynamicFilterValues[filter.filterName] || ""}
+                      onChange={(e) =>
+                        handleDynamicFilterChange(
+                          filter.filterName,
+                          e.target.value,
+                        )
+                      }
+                      className={`${inputClass} cursor-pointer`}
+                    >
+                      <option value="">اختر {filter.filterName}...</option>
+                      {filter.options.map((opt, optIdx) => (
+                        <option key={optIdx} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                ))}
+              </div>
+            </div>
           )}
-        </button>
-      </div>
-    </form>
-  );
-}
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs font-bold text-slate-700">{label}</label>
-      {children}
-    </div>
+        {/* ── 🌟 السعر فقط (تم إخلاء المساحة والغرف والحمامات من هنا) ── */}
+        <div className="w-full">
+          <Field label="السعر (ج.م)" required>
+            <input
+              name="price"
+              type="number"
+              min={0}
+              value={formData.price === 0 ? "" : formData.price}
+              onChange={handleChange}
+              placeholder="0"
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        {/* ── Image Upload ── */}
+        <Field label="صورة العقار الرئيسية">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+            <label className="md:col-span-3 border-2 border-dashed border-slate-200 hover:border-green-600 bg-slate-50/50 hover:bg-white rounded-xl p-5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-28 text-center group">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={isSaving}
+                className="hidden"
+              />
+              <UploadCloud className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
+              <span className="text-xs font-semibold text-slate-700">
+                {imageFile ? imageFile.name : "اضغط لرفع صورة العقار"}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                يدعم JPG, PNG, WEBP
+              </span>
+            </label>
+
+            {/* Preview */}
+            <div className="border border-slate-100 bg-slate-50 rounded-xl h-28 overflow-hidden flex items-center justify-center shadow-inner">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="معاينة"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-slate-300 w-full h-full bg-slate-100 justify-center">
+                  <ImageIcon className="w-8 h-8" />
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    لا توجد صورة
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </Field>
+
+        {/* ── Description ── */}
+        <Field label="الوصف والتفاصيل">
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="اكتب وصفاً تفصيلياً للعقار وميزاته..."
+            rows={4}
+            className={`${inputClass} resize-none`}
+          />
+        </Field>
+
+        {/* ── Submit ── */}
+        <div className="pt-4 border-t border-slate-100 flex justify-end">
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="w-full md:w-auto md:min-w-[160px] px-6 h-12 bg-green-700 hover:bg-green-800 active:scale-[0.98] text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>جاري الحفظ...</span>
+              </>
+            ) : (
+              <span>إضافة العقار وحفظه</span>
+            )}
+          </button>
+        </div>
+      </form>
+    </>
   );
 }
