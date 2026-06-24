@@ -28,7 +28,8 @@ import {
   Building2,
   Layers,
   ShoppingBag,
-  TrendingUp,
+  HandCoins,
+  Tags,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -47,6 +48,11 @@ const menuItems = [
     ],
   },
   {
+    icon: Tags,
+    label: "التصنيفات",
+    href: "/profitandloss",
+  },
+  {
     icon: ShoppingBag,
     label: "المنتجات",
     href: "/products",
@@ -56,7 +62,13 @@ const menuItems = [
     //   { label: "العقارات السياحية", href: "/touristrealestate" },
     // ],
   },
-  { icon: TrendingUp, label: "الأرباح والخسائر", href: "/profitandloss" },
+
+  {
+    icon: HandCoins,
+    label: "خطط التقسيط",
+    href: "/installmentPlans",
+  },
+
   { icon: Settings, label: "الإعدادات", href: "/settings" },
 ];
 
